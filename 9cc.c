@@ -163,6 +163,7 @@ Node *new_node_num(int val) {
 Node *primary(void);
 Node *mul(void);
 Node *expr(void);
+Node *unary(void);
 
 Node *primary(void) {
     // 括弧で囲まれている場合
@@ -177,12 +178,12 @@ Node *primary(void) {
 }
 
 Node *mul(void) {
-    Node *node = primary();
+    Node *node = unary();
     for (;;) {
         if (consume('*')) {
-            node = new_node(ND_MUL, node, primary());
+            node = new_node(ND_MUL, node, unary());
         } else if(consume('/')) {
-            node = new_node(ND_DIV, node, primary());
+            node = new_node(ND_DIV, node, unary());
         } else {
             return node;
         }
@@ -200,6 +201,16 @@ Node *expr(void) {
             return node;
         }
     }
+}
+
+Node *unary(void) {
+    if (consume('+')) {
+        return primary();
+    }
+    if (consume('-')) {
+        return new_node(ND_SUB, new_node_num(0), primary());
+    }
+    return primary();
 }
 
 void gen(Node *node) {
