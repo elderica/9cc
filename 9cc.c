@@ -24,11 +24,15 @@ struct Token {
 
 // 抽象構文木のノード種別
 typedef enum {
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_NUM, // 数値
+    ND_ADD,     // +
+    ND_SUB,     // -
+    ND_MUL,     // *
+    ND_DIV,     // /
+    ND_NUM,     // 数値
+    ND_EQ,      // ==
+    ND_NOT_EQ,  // !=
+    ND_GE_EQ,   // <=(左右を入れ換えることで>=にも使う)
+    ND_GE,      // <(左右を入れ換えることで>にも使う)
 } NodeKind;
 
 typedef struct Node Node;
@@ -61,10 +65,13 @@ void expect(char *op);
 int expect_number(void);
 bool at_eof(void);
 
-Node *primary(void);
-Node *mul(void);
 Node *expr(void);
+Node *equality(void);
+Node *relational(void);
+Node *add(void);
+Node *mul(void);
 Node *unary(void);
+Node *primary(void);
 
 void gen(Node *node);
 
@@ -155,7 +162,15 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (strchr("+-*/()", *p) != NULL) {
+        if (strncmp("==", p, 2) == 0 ||
+            strncmp("!=", p, 2) == 0 ||
+            strncmp(">=", p, 2) == 0 ||
+            strncmp("<=", p, 2) == 0 ) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+        }
+
+        if (strchr("+-*/()<>", *p) != NULL) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -190,18 +205,58 @@ Node *new_node_num(int val) {
     return node;
 }
 
-Node *primary(void) {
-    // 括弧で囲まれている場合
-    if (consume("(")) {
-        Node *node = expr();
-        expect(")");
-        return node;
-    }
-
-    // そうでなければ数値でなければならない
-    return new_node_num(expect_number());
+// expr = equality
+Node* expr(void) {
+    return equality();
 }
 
+// equality = relational ("==" relational | "!=" relational)*
+Node *equality(void) {
+    Node *node = relational();
+    for(;;) {
+        if (consume("==")) {
+            node = new_node(ND_EQ, node, relational());
+        } else if (consume("!=")) {
+            node = new_node(ND_NOT_EQ, node, relational());
+        } else {
+            return node;
+        }
+    }
+}
+
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node *relational(void) {
+    Node *node = add();
+    for (;;) {
+        if (consume("<")) {
+            node = new_node(ND_GE, node, add());
+        } else if (consume("<=")) {
+            node = new_node(ND_GE_EQ, node, add());
+        } else if (consume(">")) {
+            node = new_node(ND_GE, add(), node);    // ">"は"<"の左右を入れ換えたもの
+        } else if (consume(">=")) {
+            node = new_node(ND_GE_EQ, add(), node); // ">="もまた同様とみなす
+        } else {
+            return node;
+        }
+    }
+}
+
+// add = ("+" mul | "-" mul)*
+Node *add(void) {
+    Node *node = mul();
+    for (;;) {
+        if (consume("+")) {
+            node = new_node(ND_ADD, node, mul());
+        } else if (consume("-")) {
+            node = new_node(ND_SUB, node, mul());
+        } else {
+            return node;
+        }
+    }
+}
+
+// mul = unary ("*" unary | "/" unary)*
 Node *mul(void) {
     Node *node = unary();
     for (;;) {
@@ -215,19 +270,7 @@ Node *mul(void) {
     }
 }
 
-Node *expr(void) {
-    Node *node = mul();
-    for (;;) {
-        if (consume("+")) {
-            node = new_node(ND_ADD, node, mul());
-        } else if (consume("-")) {
-            node = new_node(ND_SUB, node, mul());
-        } else {
-            return node;
-        }
-    }
-}
-
+// unary = ("+" | "-")? primary
 Node *unary(void) {
     if (consume("+")) {
         return unary();
@@ -236,6 +279,19 @@ Node *unary(void) {
         return new_node(ND_SUB, new_node_num(0), unary());
     }
     return primary();
+}
+
+// primary = num | "(" expr ")"
+Node *primary(void) {
+    // 括弧で囲まれている場合
+    if (consume("(")) {
+        Node *node = expr();
+        expect(")");
+        return node;
+    }
+
+    // そうでなければ数値でなければならない
+    return new_node_num(expect_number());
 }
 
 void gen(Node *node) {
@@ -263,6 +319,26 @@ void gen(Node *node) {
         case ND_DIV:
             printf("  cqo\n");
             printf("  idiv rdi\n");
+            break;
+        case ND_EQ:
+            printf("  cmp rax, rdi\n");
+            printf("  sete al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case ND_NOT_EQ:
+            printf("  cmp rax, rdi\n");
+            printf("  setne al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case ND_GE:
+            printf("  cmp rax, rdi\n");
+            printf("  setl al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case ND_GE_EQ:
+            printf("  cmp rax, rdi\n");
+            printf("  setle al\n");
+            printf("  movzb rax, al\n");
             break;
     }
 
