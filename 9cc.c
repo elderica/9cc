@@ -218,16 +218,16 @@ int main(int argc, char **argv) {
     printf("main:\n");
 
     // 最初は数でなければならないので確認する
-    printf("  mov rax, %ld\n", expect_number());
+    printf("  mov rax, %ld\n", (long int)expect_number());
 
     while(!at_eof()) {
         if (consume('+')) {
-            printf("  add rax, %ld\n", expect_number());
+            printf("  add rax, %ld\n", (long int)expect_number());
             continue;
         }
 
         expect('-');
-        printf("  sub rax, %ld\n", expect_number());
+        printf("  sub rax, %ld\n", (long int)expect_number());
     }
 
     printf("  ret\n");
