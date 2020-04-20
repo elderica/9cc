@@ -87,6 +87,7 @@ bool at_eof() {
 }
 
 // 新しいトークンを作成してcurに繋げる
+// 新しく最後尾になった新しいトークンを返す。
 Token *new_token(TokenKind kind, Token *cur, char *str) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
@@ -95,6 +96,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
     return tok;
 }
 
+// 字句解析を行なう。
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
