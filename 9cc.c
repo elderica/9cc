@@ -109,7 +109,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' || *p == '-') {
+        if (*p == '+' ||
+            *p == '-' ||
+            *p == '*' ||
+            *p == '/' ||
+            *p == '(' ||
+            *p == ')' ) {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -202,6 +207,37 @@ Node *expr(void) {
     }
 }
 
+void gen(Node *node) {
+    if (node->kind == ND_NUM) {
+        printf("  push %d\n", node->val);
+        return;
+    }
+
+    gen(node->lhs);
+    gen(node->rhs);
+
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+
+    switch (node->kind) {
+        case ND_ADD:
+            printf("  add rax, rdi\n");
+            break;
+        case ND_SUB:
+            printf("  sub rax, rdi\n");
+            break;
+        case ND_MUL:
+            printf("  imul rax, rdi\n");
+            break;
+        case ND_DIV:
+            printf("  cqo\n");
+            printf("  idiv rdi\n");
+            break;
+    }
+
+    printf("  push rax\n");
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "引数の個数が正しくありません\n");
@@ -211,24 +247,16 @@ int main(int argc, char **argv) {
     user_input = argv[1];
     // トークナイズする
     token = tokenize(user_input);
+    Node *node = expr();
 
     // プロローグを出力する
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
     printf("main:\n");
 
-    // 最初は数でなければならないので確認する
-    printf("  mov rax, %ld\n", (long int)expect_number());
+    gen(node);
 
-    while(!at_eof()) {
-        if (consume('+')) {
-            printf("  add rax, %ld\n", (long int)expect_number());
-            continue;
-        }
-
-        expect('-');
-        printf("  sub rax, %ld\n", (long int)expect_number());
-    }
+    printf("  pop rax\n");
 
     printf("  ret\n");
     return 0;
