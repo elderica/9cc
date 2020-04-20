@@ -109,12 +109,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' ||
-            *p == '-' ||
-            *p == '*' ||
-            *p == '/' ||
-            *p == '(' ||
-            *p == ')' ) {
+        if (strchr("+-*/()", *p) != NULL) {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -257,7 +252,6 @@ int main(int argc, char **argv) {
     gen(node);
 
     printf("  pop rax\n");
-
     printf("  ret\n");
     return 0;
 }
