@@ -133,7 +133,7 @@ Node *new_node_num(int val) {
 }
 
 // expr = equality
-Node* expr(void) {
+Node *expr(void) {
     return equality();
 }
 
