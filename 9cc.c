@@ -53,6 +53,7 @@ char *user_input;
 
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
+bool startswith(char *prefix, char *str);
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *p);
@@ -149,6 +150,10 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     return tok;
 }
 
+bool startswith(char *prefix, char *str) {
+    return memcmp(prefix, str, strlen(prefix)) == 0;
+}
+
 // 字句解析を行なう。
 Token *tokenize(char *p) {
     Token head;
@@ -162,10 +167,10 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (strncmp("==", p, 2) == 0 ||
-            strncmp("!=", p, 2) == 0 ||
-            strncmp(">=", p, 2) == 0 ||
-            strncmp("<=", p, 2) == 0 ) {
+        if (startswith("==", p) ||
+            startswith("!=", p) ||
+            startswith(">=", p) ||
+            startswith("<=", p) ) {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
             continue;
