@@ -144,7 +144,7 @@ Node *equality(void) {
         if (consume("==")) {
             node = new_node(ND_EQ, node, relational());
         } else if (consume("!=")) {
-            node = new_node(ND_NOT_EQ, node, relational());
+            node = new_node(ND_NE, node, relational());
         } else {
             return node;
         }
@@ -156,20 +156,20 @@ Node *relational(void) {
     Node *node = add();
     for (;;) {
         if (consume("<")) {
-            node = new_node(ND_GE, node, add());
+            node = new_node(ND_LT, node, add());
         } else if (consume("<=")) {
-            node = new_node(ND_GE_EQ, node, add());
+            node = new_node(ND_LE, node, add());
         } else if (consume(">")) {
-            node = new_node(ND_GE, add(), node);    // ">"は"<"の左右を入れ換えたもの
+            node = new_node(ND_LT, add(), node);    // ">"は"<"の左右を入れ換えたもの
         } else if (consume(">=")) {
-            node = new_node(ND_GE_EQ, add(), node); // ">="もまた同様とみなす
+            node = new_node(ND_LE, add(), node); // ">="もまた同様とみなす
         } else {
             return node;
         }
     }
 }
 
-// add = ("+" mul | "-" mul)*
+// add = mul ("+" mul | "-" mul)*
 Node *add(void) {
     Node *node = mul();
     for (;;) {

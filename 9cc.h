@@ -30,9 +30,9 @@ typedef enum {
     ND_DIV,     // /
     ND_NUM,     // 数値
     ND_EQ,      // ==
-    ND_NOT_EQ,  // !=
-    ND_GE_EQ,   // <=(左右を入れ換えることで>=にも使う)
-    ND_GE,      // <(左右を入れ換えることで>にも使う)
+    ND_NE,      // !=
+    ND_LE,      // <=(左右を入れ換えることで>=にも使う)
+    ND_LT,      // <(左右を入れ換えることで>にも使う)
 } NodeKind;
 
 typedef struct Node Node;
@@ -52,7 +52,7 @@ extern char *user_input;
 extern void error(char *fmt, ...);
 extern bool startswith(char *prefix, char *str);
 
-// paese.c
+// parse.c
 extern void error_at(char *loc, char *fmt, ...);
 extern Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 extern Token *tokenize(char *p);
