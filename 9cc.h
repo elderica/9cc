@@ -8,6 +8,7 @@
 
 typedef enum {
     TK_RESERVED, // 記号
+    TK_IDENT,    // 変数
     TK_NUM,      // 整数
     TK_EOF,      // 入力の終わり
 } TokenKind;
