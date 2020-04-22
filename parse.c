@@ -1,80 +1,11 @@
 /* vim:set shiftwidth=4 softtabstop=4 expandtab: */
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-typedef enum {
-    TK_RESERVED, // 記号
-    TK_NUM,      // 整数
-    TK_EOF,      // 入力の終わり
-} TokenKind;
-
-typedef struct Token Token;
-
-struct Token {
-    TokenKind kind; // トークンの種類
-    Token *next;    // 次のトークン
-    int val;        // 数値トークンのときはその値
-    char *str;      // トークン文字列
-    int len;        // トークンの長さ
-};
-
-// 抽象構文木のノード種別
-typedef enum {
-    ND_ADD,     // +
-    ND_SUB,     // -
-    ND_MUL,     // *
-    ND_DIV,     // /
-    ND_NUM,     // 数値
-    ND_EQ,      // ==
-    ND_NOT_EQ,  // !=
-    ND_GE_EQ,   // <=(左右を入れ換えることで>=にも使う)
-    ND_GE,      // <(左右を入れ換えることで>にも使う)
-} NodeKind;
-
-typedef struct Node Node;
-
-struct Node {
-    NodeKind kind; // ノードの種類
-    Node *lhs;     // 左辺
-    Node *rhs;     // 右辺
-    int val;       // kindがND_NUMのときに使う
-};
-
+#include "9cc.h"
 
 // 現在着目しているトークン
 Token *token;
 
 // 入力プログラム
 char *user_input;
-
-void error_at(char *loc, char *fmt, ...);
-void error(char *fmt, ...);
-bool startswith(char *prefix, char *str);
-
-Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-Token *tokenize(char *p);
-
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
-
-bool consume(char *op);
-void expect(char *op);
-int expect_number(void);
-bool at_eof(void);
-
-Node *expr(void);
-Node *equality(void);
-Node *relational(void);
-Node *add(void);
-Node *mul(void);
-Node *unary(void);
-Node *primary(void);
-
-void gen(Node *node);
 
 // プログラム中のどこにエラーがあるか報告する
 void error_at(char *loc, char *fmt, ...) {
@@ -89,17 +20,6 @@ void error_at(char *loc, char *fmt, ...) {
     fprintf(stderr, "\n");
     exit(1);
 }
-
-// エラーを報告するための関数
-void error(char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
-}
-
-
 
 // 次のトークンが期待している記号ならば、トークンを一つ読み進めて真を返す。
 // そうでなければ偽を返す。
@@ -148,10 +68,6 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     tok->len = len;
     cur->next = tok;
     return tok;
-}
-
-bool startswith(char *prefix, char *str) {
-    return memcmp(prefix, str, strlen(prefix)) == 0;
 }
 
 // 字句解析を行なう。
@@ -300,76 +216,3 @@ Node *primary(void) {
     return new_node_num(expect_number());
 }
 
-void gen(Node *node) {
-    if (node->kind == ND_NUM) {
-        printf("  push %d\n", node->val);
-        return;
-    }
-
-    gen(node->lhs);
-    gen(node->rhs);
-
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
-
-    switch (node->kind) {
-        case ND_ADD:
-            printf("  add rax, rdi\n");
-            break;
-        case ND_SUB:
-            printf("  sub rax, rdi\n");
-            break;
-        case ND_MUL:
-            printf("  imul rax, rdi\n");
-            break;
-        case ND_DIV:
-            printf("  cqo\n");
-            printf("  idiv rdi\n");
-            break;
-        case ND_EQ:
-            printf("  cmp rax, rdi\n");
-            printf("  sete al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case ND_NOT_EQ:
-            printf("  cmp rax, rdi\n");
-            printf("  setne al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case ND_GE:
-            printf("  cmp rax, rdi\n");
-            printf("  setl al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case ND_GE_EQ:
-            printf("  cmp rax, rdi\n");
-            printf("  setle al\n");
-            printf("  movzb rax, al\n");
-            break;
-    }
-
-    printf("  push rax\n");
-}
-
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "引数の個数が正しくありません\n");
-        return 1;
-    }
-
-    user_input = argv[1];
-    // トークナイズする
-    token = tokenize(user_input);
-    Node *node = expr();
-
-    // プロローグを出力する
-    printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    printf("main:\n");
-
-    gen(node);
-
-    printf("  pop rax\n");
-    printf("  ret\n");
-    return 0;
-}
