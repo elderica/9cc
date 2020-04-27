@@ -29,6 +29,8 @@ typedef enum {
     ND_MUL,     // *
     ND_DIV,     // /
     ND_NUM,     // 数値
+    ND_ASSIGN,  // =
+    ND_LVAR,    // ローカル変数
     ND_EQ,      // ==
     ND_NE,      // !=
     ND_LE,      // <=(左右を入れ換えることで>=にも使う)
@@ -41,12 +43,16 @@ struct Node {
     Node *lhs;     // 左辺
     Node *rhs;     // 右辺
     int val;       // kindがND_NUMのときに使う
+    int offset;    // kindがND_LVARのときに使う
 };
 
 // 現在着目しているトークン
 extern Token *token;
 // 入力プログラム
 extern char *user_input;
+// 各行(式の並び)の構文解析結果を保存する配列
+#define MAX_LINES 100
+extern Node *code[MAX_LINES+1];
 
 // container.c
 extern void error(char *fmt, ...);
@@ -61,11 +67,15 @@ extern Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 extern Node *new_node_num(int val);
 
 extern bool consume(char *op);
+extern Token *consume_ident(void);
 extern void expect(char *op);
 extern int expect_number(void);
 extern bool at_eof(void);
 
+extern void program(void);
+extern Node *stmt(void);
 extern Node *expr(void);
+extern Node *assign(void);
 extern Node *equality(void);
 extern Node *relational(void);
 extern Node *add(void);
@@ -74,5 +84,5 @@ extern Node *unary(void);
 extern Node *primary(void);
 
 // gen.c
+extern void gen_lval(Node *node);
 extern void gen(Node *node);
-

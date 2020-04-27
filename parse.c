@@ -7,6 +7,9 @@ Token *token;
 // 入力プログラム
 char *user_input;
 
+// 各行(式の並び)の構文解析結果を保存する配列
+Node *code[MAX_LINES+1];
+
 // プログラム中のどこにエラーがあるか報告する
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
@@ -31,6 +34,17 @@ bool consume(char *op) {
     }
     token = token->next;
     return true;
+}
+
+// 次のトークンが識別子ならば、そのトークンを返してトークンを一つ読み進める。
+// そうでなければNULLを返す。
+Token *consume_ident(void) {
+    if (token->kind != TK_IDENT) {
+        return NULL;
+    }
+    Token *cur = token;
+    token = token->next;
+    return cur;
 }
 
 // 次のトークンが、期待している記号ならば、トークンを1つ読み進める。
@@ -92,7 +106,8 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (strchr("+-*/()<>", *p) != NULL) {
+        // カンマと代入演算子は1文字演算子と同様に予約語として扱う
+        if (strchr("+-*/()<>;=", *p) != NULL) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -132,9 +147,35 @@ Node *new_node_num(int val) {
     return node;
 }
 
-// expr = equality
+// program = stmt*
+void program(void) {
+    int i;
+
+    for (i = 0; !at_eof() && i < MAX_LINES; i++) {
+        code[i] = stmt();
+    }
+    code[i] = NULL;
+}
+
+// stmt = expr ";"
+Node  *stmt(void) {
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
+// expr = assign
 Node *expr(void) {
-    return equality();
+    return assign();
+}
+
+// assign = equality ("=" assign)?
+Node *assign(void) {
+    Node *node = equality();
+    if (consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
+    return node;
 }
 
 // equality = relational ("==" relational | "!=" relational)*
@@ -208,12 +249,21 @@ Node *unary(void) {
     return primary();
 }
 
-// primary = num | "(" expr ")"
+// primary = num | ident | "(" expr ")"
 Node *primary(void) {
     // 括弧で囲まれている場合
     if (consume("(")) {
         Node *node = expr();
         expect(")");
+        return node;
+    }
+
+    // 識別子に対してスタックフレーム内の位置を予め割りてておく
+    Token *token = consume_ident();
+    if (token != NULL) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (token->str[0] - 'a' + 1) * 8;
         return node;
     }
 
