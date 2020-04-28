@@ -57,6 +57,7 @@ try 0 'p=3;q=4;p==q;'
 try 1 'p=3;q=p;p==q;'
 try 0 'akizuki=1;haruzuki=9;akizuki==haruzuki;'
 try 1 'akizuki=1;haruzuki=9;akizuki==akizuki;'
+try 1 'akizuki=1;haruzuki=9;yoizuki=10;haruzuki<=yoizuki;'
 
 echo OK
 

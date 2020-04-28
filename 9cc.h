@@ -47,6 +47,15 @@ struct Node {
     int offset;    // kindがND_LVARのときに使う
 };
 
+// ローカル変数を表す型
+typedef struct LVar LVar;
+struct LVar {
+    LVar *next;  // 次のLVarまたは終端を表すNULLが入る
+    char *name;  // 変数の名前
+    int len;     // 変数の名前の長さ
+    int offset;  // RBPからの距離
+};
+
 // 現在着目しているトークン
 extern Token *token;
 // 入力プログラム
@@ -54,6 +63,8 @@ extern char *user_input;
 // 各行(式の並び)の構文解析結果を保存する配列
 #define MAX_LINES 100
 extern Node *code[MAX_LINES+1];
+// ローカル変数
+extern LVar *locals;
 
 // container.c
 extern void error(char *fmt, ...);
@@ -72,6 +83,7 @@ extern Token *consume_ident(void);
 extern void expect(char *op);
 extern int expect_number(void);
 extern bool at_eof(void);
+extern LVar *find_lvar(Token * tok);
 
 extern void program(void);
 extern Node *stmt(void);
