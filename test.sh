@@ -61,6 +61,9 @@ try 1 'akizuki=1;haruzuki=9;yoizuki=10;haruzuki<=yoizuki;'
 try 1 'akizuki=1;haruzuki=9;yoizuki=10;haruzuki<=yoizuki;'
 try 1 'p=3;q=p;return p==q;p!=q;'
 try 42 'p=3;q=p;return 42;return p==q;p!=q;'
+try 27 'a1=27;a2=20;return a1;'
+try 27 'a_a=27;a_b=20;return a_a;'
+try 4 'A=4;b=2;c3=5;return A;'
 
 echo OK
 

@@ -129,10 +129,10 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (islower(*p)) {
+        if (is_alnum(*p)) {
             // 識別子の長さを計算する
             char *q = p;
-            while (islower(*q)) {
+            while (is_alnum(*q)) {
                 q++;
             }
             cur = new_token(TK_IDENT, cur, p, q-p);
