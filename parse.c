@@ -120,8 +120,14 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+        if (islower(*p)) {
+            // 識別子の長さを計算する
+            char *q = p;
+            while (islower(*q)) {
+                q++;
+            }
+            cur = new_token(TK_IDENT, cur, p, q-p);
+            p = q;
             continue;
         }
 

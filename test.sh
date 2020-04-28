@@ -55,6 +55,8 @@ try 43 'z=42;z+1;'
 try 27 'z=3*3;z*3;'
 try 0 'p=3;q=4;p==q;'
 try 1 'p=3;q=p;p==q;'
+try 0 'akizuki=1;haruzuki=9;akizuki==haruzuki;'
+try 1 'akizuki=1;haruzuki=9;akizuki==akizuki;'
 
 echo OK
 
