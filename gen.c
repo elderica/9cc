@@ -35,6 +35,16 @@ void gen(Node *node) {
             printf("  mov [rax], rdi\n");
             printf("  push rdi\n");
             return;
+        case ND_RETURN:
+            // main関数により余計な処理や後続の式に対するアセンブラコードも出力される
+            // しかし、ここでretするので、無視してよい
+            gen(node->lhs);
+            printf("  # ND_RETURN\n");
+            printf("  pop rax\n");
+            printf("  mov rsp, rbp\n");
+            printf("  pop rbp\n");
+            printf("  ret\n");
+            return;
     }
 
     gen(node->lhs);

@@ -58,6 +58,9 @@ try 1 'p=3;q=p;p==q;'
 try 0 'akizuki=1;haruzuki=9;akizuki==haruzuki;'
 try 1 'akizuki=1;haruzuki=9;akizuki==akizuki;'
 try 1 'akizuki=1;haruzuki=9;yoizuki=10;haruzuki<=yoizuki;'
+try 1 'akizuki=1;haruzuki=9;yoizuki=10;haruzuki<=yoizuki;'
+try 1 'p=3;q=p;return p==q;p!=q;'
+try 42 'p=3;q=p;return 42;return p==q;p!=q;'
 
 echo OK
 

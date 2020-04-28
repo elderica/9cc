@@ -36,6 +36,7 @@ typedef enum {
     ND_NE,      // !=
     ND_LE,      // <=(左右を入れ換えることで>=にも使う)
     ND_LT,      // <(左右を入れ換えることで>にも使う)
+    ND_RETURN,  // return
 } NodeKind;
 
 typedef struct Node Node;
@@ -84,6 +85,7 @@ extern void expect(char *symbol);
 extern int expect_number(void);
 extern bool at_eof(void);
 extern LVar *find_lvar(Token * tok);
+extern bool is_alnum(char c);
 
 extern void program(void);
 extern Node *stmt(void);

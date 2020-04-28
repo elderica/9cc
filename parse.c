@@ -100,6 +100,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (startswith("return", p) && !is_alnum(p[6])) {
+            cur = new_token(TK_RESERVED, cur, p, 6);
+            p += 6;
+            continue;
+        }
+
         if (startswith("==", p) ||
             startswith("!=", p) ||
             startswith(">=", p) ||
@@ -184,9 +190,17 @@ void program(void) {
     code[i] = NULL;
 }
 
-// stmt = expr ";"
+// stmt = expr ";" | "return" expr ";"
 Node  *stmt(void) {
-    Node *node = expr();
+    Node *node;
+
+    if (consume("return")) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    } else {
+        node = expr();
+    }
     expect(";");
     return node;
 }
