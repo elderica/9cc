@@ -78,9 +78,9 @@ extern Token *tokenize(char *p);
 extern Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 extern Node *new_node_num(int val);
 
-extern bool consume(char *op);
+extern bool consume(char *symbol);
 extern Token *consume_ident(void);
-extern void expect(char *op);
+extern void expect(char *symbol);
 extern int expect_number(void);
 extern bool at_eof(void);
 extern LVar *find_lvar(Token * tok);

@@ -29,10 +29,10 @@ void error_at(char *loc, char *fmt, ...) {
 
 // 次のトークンが期待している記号ならば、トークンを一つ読み進めて真を返す。
 // そうでなければ偽を返す。
-bool consume(char *op) {
+bool consume(char *symbol) {
     if (token->kind != TK_RESERVED ||
-        strlen(op) != token->len   ||
-        memcmp(token->str, op, token->len)) {
+        strlen(symbol) != token->len   ||
+        memcmp(token->str, symbol, token->len)) {
         return false;
     }
     token = token->next;
@@ -52,11 +52,11 @@ Token *consume_ident(void) {
 
 // 次のトークンが、期待している記号ならば、トークンを1つ読み進める。
 // それ以外のときは、エラーを報告する。
-void expect(char *op) {
+void expect(char *symbol) {
     if (token->kind != TK_RESERVED ||
-        strlen(op) != token->len   ||
-        memcmp(token->str, op, token->len)) {
-        error_at(token->str, "'%s'ではありません", op);
+        strlen(symbol) != token->len   ||
+        memcmp(token->str, symbol, token->len)) {
+        error_at(token->str, "'%s'ではありません", symbol);
     }
     token = token->next;
 }
