@@ -232,13 +232,6 @@ void program(void) {
         code[i] = stmt();
     }
     code[i] = NULL;
-
-    // 変数にオフセットを割り当てる
-    int o = 0;
-    for (LVar *var = locals; var != NULL; var = var->next) {
-        var->offset = o;
-        o += 8;
-    }
 }
 
 // stmt = expr ";" | "return" expr ";"

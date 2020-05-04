@@ -115,6 +115,13 @@ void gencode(void) {
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, 208\n"); // a〜zの26個の変数×8バイト
 
+    // 変数にオフセットを割り当てる
+    int o = 0;
+    for (LVar *var = locals; var != NULL; var = var->next) {
+        var->offset = o;
+        o += 8;
+    }
+
     for (int i = 0; code[i] != NULL; i++) {
         printf("  # %s:%d i:%d\n", __FILE__, __LINE__, i);
         gen(code[i]);
