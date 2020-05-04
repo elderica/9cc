@@ -106,6 +106,13 @@ void gen(Node *node) {
 
 // コード生成器のエントリポイント
 void gencode(Node *node) {
+    // 変数にオフセットを割り当てる
+    int o = 0;
+    for (LVar *var = locals; var != NULL; var = var->next) {
+        var->offset = o;
+        o += 8;
+    }
+
     // プロローグを出力する
     // 変数のための領域を確保する
     printf(".intel_syntax noprefix\n");
@@ -113,14 +120,7 @@ void gencode(Node *node) {
     printf("main:\n");
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
-    printf("  sub rsp, 208\n"); // a〜zの26個の変数×8バイト
-
-    // 変数にオフセットを割り当てる
-    int o = 0;
-    for (LVar *var = locals; var != NULL; var = var->next) {
-        var->offset = o;
-        o += 8;
-    }
+    printf("  sub rsp, %d\n", o);
 
     int l = 1;
     for (Node *cur = node; cur != NULL; cur = cur->next) {
