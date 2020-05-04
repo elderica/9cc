@@ -249,9 +249,7 @@ static Node  *stmt(void) {
     Node *node;
 
     if (consume("return")) {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_RETURN;
-        node->lhs = expr();
+        node = new_node_binary(ND_RETURN, expr(), NULL);
     } else {
         node = expr();
     }
