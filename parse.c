@@ -242,7 +242,7 @@ static Node  *stmt(void) {
     if (consume("return")) {
         node = new_node_binary(ND_RETURN, expr(), NULL);
     } else {
-        node = expr();
+        node = new_node_binary(ND_EXPR_STMT, expr(), NULL);
     }
     expect(";");
     return node;

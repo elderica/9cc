@@ -40,6 +40,7 @@ enum NodeKind {
     ND_LE,      // <=(左右を入れ換えることで>=にも使う)
     ND_LT,      // <(左右を入れ換えることで>にも使う)
     ND_RETURN,  // return
+    ND_EXPR_STMT,  // 式文
 };
 
 // ローカル変数を表す型

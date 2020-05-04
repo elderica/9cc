@@ -37,6 +37,11 @@ void gen(Node *node) {
             printf("  mov [rax], rdi\n");
             printf("  push rdi\n");
             return;
+        case ND_EXPR_STMT:
+            printf("  # ND_EXPR_STMT\n");
+            gen(node->lhs);
+            printf("  add rsp, 8\n");
+            return;
         case ND_RETURN:
             // gencode関数により余計な処理や後続の式に対するアセンブラコードも出力される
             // しかし、ここでretするので、無視してよい
