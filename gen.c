@@ -1,7 +1,10 @@
 /* vim:set shiftwidth=4 softtabstop=4 expandtab: */
 #include "9cc.h"
 
-void gen_lval(Node *node) {
+static void gen_lval(Node *node);
+static void gen(Node *node);
+
+static void gen_lval(Node *node) {
     if (node->kind != ND_LVAR) {
         error("代入の左辺値が変数ではありません");
     }
@@ -36,7 +39,7 @@ void gen(Node *node) {
             printf("  push rdi\n");
             return;
         case ND_RETURN:
-            // main関数により余計な処理や後続の式に対するアセンブラコードも出力される
+            // gencode関数により余計な処理や後続の式に対するアセンブラコードも出力される
             // しかし、ここでretするので、無視してよい
             gen(node->lhs);
             printf("  # ND_RETURN\n");
@@ -101,4 +104,26 @@ void gen(Node *node) {
     printf("  push rax\n");
 }
 
+// コード生成器のエントリポイント
+void gencode(void) {
+    // プロローグを出力する
+    // 変数のための領域を確保する
+    printf(".intel_syntax noprefix\n");
+    printf(".global main\n");
+    printf("main:\n");
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, 208\n"); // a〜zの26個の変数×8バイト
 
+    for (int i = 0; code[i] != NULL; i++) {
+        printf("  # %s:%d i:%d\n", __FILE__, __LINE__, i);
+        gen(code[i]);
+    }
+
+    // エピローグ
+    // 最後の式の結果がraxに残り、返り値となる。
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+}

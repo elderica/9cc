@@ -99,5 +99,4 @@ extern Node *unary(void);
 extern Node *primary(void);
 
 // gen.c
-extern void gen_lval(Node *node);
-extern void gen(Node *node);
+extern void gencode(void);
