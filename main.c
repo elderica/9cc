@@ -24,13 +24,11 @@ int main(int argc, char **argv) {
     for (int i = 0; code[i] != NULL; i++) {
         printf("  # %s:%d i:%d\n", __FILE__, __LINE__, i);
         gen(code[i]);
-        // 各式の評価結果がraxに残る(gen関数末尾参照)。
-        // スタック溢れを防ぐため、popする
-        printf("  pop rax\n");
     }
 
     // エピローグ
     // 最後の式の結果がraxに残り、返り値となる。
+    printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");
