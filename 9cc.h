@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <locale.h>
 
 typedef enum TokenKind TokenKind;
 enum TokenKind {

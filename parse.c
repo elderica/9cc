@@ -201,10 +201,7 @@ static Node *new_node_lvar(LVar *var) {
 
 // 識別子として許す文字種を定義する
 static bool is_alnum(char c) {
-    return  ('a' <= c && c <= 'z') ||
-            ('A' <= c && c <= 'Z') ||
-            ('0' <= c && c <= '9') ||
-            (c == '_');
+    return  isalnum(c) || (c == '_');
 }
 
 // 変数を名前で検索する。無ければNULLを返す。
