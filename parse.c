@@ -16,7 +16,7 @@ LVar *locals = NULL;
 static void error_at(char *loc, char *fmt, ...);
 static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
-static Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
 static Node *new_node_lvar(LVar *var);
 
@@ -176,7 +176,7 @@ Token *tokenize(char *p) {
     return head.next;
 }
 
-static Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     node->lhs = lhs;
@@ -268,7 +268,7 @@ static Node *expr(void) {
 static Node *assign(void) {
     Node *node = equality();
     if (consume("=")) {
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_node_binary(ND_ASSIGN, node, assign());
     }
     return node;
 }
@@ -278,9 +278,9 @@ static Node *equality(void) {
     Node *node = relational();
     for(;;) {
         if (consume("==")) {
-            node = new_node(ND_EQ, node, relational());
+            node = new_node_binary(ND_EQ, node, relational());
         } else if (consume("!=")) {
-            node = new_node(ND_NE, node, relational());
+            node = new_node_binary(ND_NE, node, relational());
         } else {
             return node;
         }
@@ -292,13 +292,13 @@ static Node *relational(void) {
     Node *node = add();
     for (;;) {
         if (consume("<")) {
-            node = new_node(ND_LT, node, add());
+            node = new_node_binary(ND_LT, node, add());
         } else if (consume("<=")) {
-            node = new_node(ND_LE, node, add());
+            node = new_node_binary(ND_LE, node, add());
         } else if (consume(">")) {
-            node = new_node(ND_LT, add(), node);    // ">"は"<"の左右を入れ換えたもの
+            node = new_node_binary(ND_LT, add(), node);    // ">"は"<"の左右を入れ換えたもの
         } else if (consume(">=")) {
-            node = new_node(ND_LE, add(), node); // ">="もまた同様とみなす
+            node = new_node_binary(ND_LE, add(), node); // ">="もまた同様とみなす
         } else {
             return node;
         }
@@ -310,9 +310,9 @@ static Node *add(void) {
     Node *node = mul();
     for (;;) {
         if (consume("+")) {
-            node = new_node(ND_ADD, node, mul());
+            node = new_node_binary(ND_ADD, node, mul());
         } else if (consume("-")) {
-            node = new_node(ND_SUB, node, mul());
+            node = new_node_binary(ND_SUB, node, mul());
         } else {
             return node;
         }
@@ -324,9 +324,9 @@ static Node *mul(void) {
     Node *node = unary();
     for (;;) {
         if (consume("*")) {
-            node = new_node(ND_MUL, node, unary());
+            node = new_node_binary(ND_MUL, node, unary());
         } else if(consume("/")) {
-            node = new_node(ND_DIV, node, unary());
+            node = new_node_binary(ND_DIV, node, unary());
         } else {
             return node;
         }
@@ -339,7 +339,7 @@ static Node *unary(void) {
         return unary();
     }
     if (consume("-")) {
-        return new_node(ND_SUB, new_node_num(0), unary());
+        return new_node_binary(ND_SUB, new_node_num(0), unary());
     }
     return primary();
 }
