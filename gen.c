@@ -43,14 +43,10 @@ void gen(Node *node) {
             printf("  add rsp, 8\n");
             return;
         case ND_RETURN:
-            // gencode関数により余計な処理や後続の式に対するアセンブラコードも出力される
-            // しかし、ここでretするので、無視してよい
             gen(node->lhs);
             printf("  # ND_RETURN\n");
             printf("  pop rax\n");
-            printf("  mov rsp, rbp\n");
-            printf("  pop rbp\n");
-            printf("  ret\n");
+            printf("  jmp .L.return\n");
             return;
     }
 
@@ -133,8 +129,7 @@ void gencode(Node *node) {
     }
 
     // エピローグ
-    // 最後の式の結果がraxに残り、返り値となる。
-    printf("  pop rax\n");
+    printf(".L.return:\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");
