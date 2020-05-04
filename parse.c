@@ -18,14 +18,19 @@ static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
 static Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
+static Node *new_node_lvar(LVar *var);
 
 static bool consume(char *symbol);
 static Token *consume_ident(void);
 static void expect(char *symbol);
 static int expect_number(void);
 static bool at_eof(void);
-static LVar *find_lvar(Token * tok);
+
+static LVar *find_lvar(Token *tok);
+static LVar *new_lvar(Token *tok);
+
 static bool is_alnum(char c);
+
 static Node *stmt(void);
 static Node *expr(void);
 static Node *assign(void);
@@ -186,6 +191,14 @@ static Node *new_node_num(int val) {
     return node;
 }
 
+static Node *new_node_lvar(LVar *var) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->var = var;
+
+    return node;
+}
+
 // 識別子として許す文字種を定義する
 static bool is_alnum(char c) {
     return  ('a' <= c && c <= 'z') ||
@@ -204,6 +217,16 @@ static LVar *find_lvar(Token *tok) {
     return NULL;
 }
 
+static LVar *new_lvar(Token *tok) {
+    LVar *var = calloc(1, sizeof(LVar));
+    var->name = tok->str;
+    var->len = tok->len;
+
+    var->next = locals;
+    locals = var;
+    return var;
+}
+
 // program = stmt*
 void program(void) {
     int i;
@@ -212,6 +235,13 @@ void program(void) {
         code[i] = stmt();
     }
     code[i] = NULL;
+
+    // 変数にオフセットを割り当てる
+    int o = 0;
+    for (LVar *var = locals; var != NULL; var = var->next) {
+        var->offset = o;
+        o += 8;
+    }
 }
 
 // stmt = expr ";" | "return" expr ";"
@@ -323,32 +353,14 @@ static Node *primary(void) {
         return node;
     }
 
-    // 識別子に対してスタックフレーム内の位置を予め割りてておく
     Token *tok = consume_ident();
     if (tok != NULL) {
-        Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-
-        LVar *lvar = find_lvar(tok);
         // 既出の変数ならばそれを参照させ、そうでなければ新規の変数として扱う
-        if (lvar != NULL) {
-            node->offset = lvar->offset;
-        } else {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            // localsにダミーのLVarを置かずにここで対処する。
-            // 初回はlocals == NULLであるため、NULL->offsetのように参照されてしまう。
-            if (locals == NULL) {
-                lvar->offset = 0;
-            } else {
-                lvar->offset = locals->offset + 8;
-            }
-            node->offset = lvar->offset;
-            locals = lvar;
+        LVar *lvar = find_lvar(tok);
+        if (lvar == NULL) {
+            lvar = new_lvar(tok);
         }
-        return node;
+        return new_node_lvar(lvar);
     }
 
     // そうでなければ数値でなければならない

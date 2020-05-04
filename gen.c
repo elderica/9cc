@@ -11,7 +11,7 @@ static void gen_lval(Node *node) {
 
     printf("  # gen_lval\n");
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->offset);
+    printf("  sub rax, %d\n", node->var->offset);
     printf("  push rax\n");
 }
 

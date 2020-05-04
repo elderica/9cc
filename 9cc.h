@@ -41,15 +41,6 @@ enum NodeKind {
     ND_RETURN,  // return
 };
 
-typedef struct Node Node;
-struct Node {
-    NodeKind kind; // ノードの種類
-    Node *lhs;     // 左辺
-    Node *rhs;     // 右辺
-    int val;       // kindがND_NUMのときに使う
-    int offset;    // kindがND_LVARのときに使う
-};
-
 // ローカル変数を表す型
 typedef struct LVar LVar;
 struct LVar {
@@ -57,6 +48,18 @@ struct LVar {
     char *name;  // 変数の名前
     int len;     // 変数の名前の長さ
     int offset;  // RBPからの距離
+};
+
+typedef struct Node Node;
+struct Node {
+    NodeKind kind; // ノードの種類
+
+    Node *lhs;     // 左辺
+    Node *rhs;     // 右辺
+
+    int val;       // kindがND_NUMのときに使う
+
+    LVar *var;     // kindがND_LVARのときに使う
 };
 
 // 現在着目しているトークン
