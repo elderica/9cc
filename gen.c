@@ -105,7 +105,7 @@ void gen(Node *node) {
 }
 
 // コード生成器のエントリポイント
-void gencode(void) {
+void gencode(Node *node) {
     // プロローグを出力する
     // 変数のための領域を確保する
     printf(".intel_syntax noprefix\n");
@@ -122,9 +122,10 @@ void gencode(void) {
         o += 8;
     }
 
-    for (int i = 0; code[i] != NULL; i++) {
-        printf("  # %s:%d i:%d\n", __FILE__, __LINE__, i);
-        gen(code[i]);
+    int l = 1;
+    for (Node *cur = node; cur != NULL; cur = cur->next) {
+        printf("  # %s:%d line:%d\n", __FILE__, __LINE__, l++);
+        gen(cur);
     }
 
     // エピローグ

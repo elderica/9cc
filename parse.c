@@ -7,9 +7,6 @@ Token *token;
 // 入力プログラム
 char *user_input;
 
-// 各行(式の並び)の構文解析結果を保存する配列
-Node *code[MAX_LINES+1];
-
 // ローカル変数
 LVar *locals = NULL;
 
@@ -225,13 +222,17 @@ static LVar *new_lvar(Token *tok) {
 }
 
 // program = stmt*
-void program(void) {
-    int i;
+Node* program(void) {
+    Node dummy;
+    Node *cur = &dummy;
 
-    for (i = 0; !at_eof() && i < MAX_LINES; i++) {
-        code[i] = stmt();
+    while (!at_eof()){
+        cur->next = stmt();
+        cur = cur->next;
     }
-    code[i] = NULL;
+    cur->next = NULL;
+
+    return dummy.next;
 }
 
 // stmt = expr ";" | "return" expr ";"

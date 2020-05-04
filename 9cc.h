@@ -55,6 +55,8 @@ typedef struct Node Node;
 struct Node {
     NodeKind kind; // ノードの種類
 
+    Node *next;    // 次の文
+
     Node *lhs;     // 左辺
     Node *rhs;     // 右辺
 
@@ -67,9 +69,6 @@ struct Node {
 extern Token *token;
 // 入力プログラム
 extern char *user_input;
-// 各行(式の並び)の構文解析結果を保存する配列
-#define MAX_LINES 100
-extern Node *code[MAX_LINES+1];
 // ローカル変数
 extern LVar *locals;
 
@@ -79,7 +78,7 @@ extern bool startswith(char *prefix, char *str);
 
 // parse.c
 extern Token *tokenize(char *p);
-extern void program(void);
+extern Node* program(void);
 
 // gen.c
-extern void gencode(void);
+extern void gencode(Node* node);
