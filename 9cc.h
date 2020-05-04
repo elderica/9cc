@@ -7,12 +7,13 @@
 #include <string.h>
 #include <ctype.h>
 
-typedef enum {
+typedef enum TokenKind TokenKind;
+enum TokenKind {
     TK_RESERVED, // 記号
     TK_IDENT,    // 変数
     TK_NUM,      // 整数
     TK_EOF,      // 入力の終わり
-} TokenKind;
+};
 
 typedef struct Token Token;
 struct Token {
@@ -24,7 +25,8 @@ struct Token {
 };
 
 // 抽象構文木のノード種別
-typedef enum {
+typedef enum NodeKind NodeKind;
+enum NodeKind {
     ND_ADD,     // +
     ND_SUB,     // -
     ND_MUL,     // *
@@ -37,7 +39,7 @@ typedef enum {
     ND_LE,      // <=(左右を入れ換えることで>=にも使う)
     ND_LT,      // <(左右を入れ換えることで>にも使う)
     ND_RETURN,  // return
-} NodeKind;
+};
 
 typedef struct Node Node;
 struct Node {
@@ -67,36 +69,13 @@ extern Node *code[MAX_LINES+1];
 // ローカル変数
 extern LVar *locals;
 
-// container.c
+// utils.c
 extern void error(char *fmt, ...);
 extern bool startswith(char *prefix, char *str);
 
 // parse.c
-extern void error_at(char *loc, char *fmt, ...);
-extern Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 extern Token *tokenize(char *p);
-
-extern Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-extern Node *new_node_num(int val);
-
-extern bool consume(char *symbol);
-extern Token *consume_ident(void);
-extern void expect(char *symbol);
-extern int expect_number(void);
-extern bool at_eof(void);
-extern LVar *find_lvar(Token * tok);
-extern bool is_alnum(char c);
-
 extern void program(void);
-extern Node *stmt(void);
-extern Node *expr(void);
-extern Node *assign(void);
-extern Node *equality(void);
-extern Node *relational(void);
-extern Node *add(void);
-extern Node *mul(void);
-extern Node *unary(void);
-extern Node *primary(void);
 
 // gen.c
 extern void gencode(void);

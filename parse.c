@@ -13,8 +13,32 @@ Node *code[MAX_LINES+1];
 // ローカル変数
 LVar *locals = NULL;
 
+static void error_at(char *loc, char *fmt, ...);
+static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
+
+static Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+static Node *new_node_num(int val);
+
+static bool consume(char *symbol);
+static Token *consume_ident(void);
+static void expect(char *symbol);
+static int expect_number(void);
+static bool at_eof(void);
+static LVar *find_lvar(Token * tok);
+static bool is_alnum(char c);
+static Node *stmt(void);
+static Node *expr(void);
+static Node *assign(void);
+static Node *equality(void);
+static Node *relational(void);
+static Node *add(void);
+static Node *mul(void);
+static Node *unary(void);
+static Node *primary(void);
+
+
 // プログラム中のどこにエラーがあるか報告する
-void error_at(char *loc, char *fmt, ...) {
+static void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
@@ -29,7 +53,7 @@ void error_at(char *loc, char *fmt, ...) {
 
 // 次のトークンが期待している記号ならば、トークンを一つ読み進めて真を返す。
 // そうでなければ偽を返す。
-bool consume(char *symbol) {
+static bool consume(char *symbol) {
     if (token->kind != TK_RESERVED ||
         strlen(symbol) != token->len   ||
         memcmp(token->str, symbol, token->len)) {
@@ -41,7 +65,7 @@ bool consume(char *symbol) {
 
 // 次のトークンが識別子ならば、そのトークンを返してトークンを一つ読み進める。
 // そうでなければNULLを返す。
-Token *consume_ident(void) {
+static Token *consume_ident(void) {
     if (token->kind != TK_IDENT) {
         return NULL;
     }
@@ -52,7 +76,7 @@ Token *consume_ident(void) {
 
 // 次のトークンが、期待している記号ならば、トークンを1つ読み進める。
 // それ以外のときは、エラーを報告する。
-void expect(char *symbol) {
+static void expect(char *symbol) {
     if (token->kind != TK_RESERVED ||
         strlen(symbol) != token->len   ||
         memcmp(token->str, symbol, token->len)) {
@@ -63,7 +87,7 @@ void expect(char *symbol) {
 
 // 次のトークンが数値ならば、トークンを1つ読み進めてその数値を返す。
 // それ以外の場合にはエラーを報告する。
-int expect_number() {
+static int expect_number() {
     if (token->kind != TK_NUM) {
         error_at(token->str, "数ではありません");
     }
@@ -72,13 +96,13 @@ int expect_number() {
     return val;
 }
 
-bool at_eof(void) {
+static bool at_eof(void) {
     return token->kind == TK_EOF;
 }
 
 // 新しいトークンを作成してcurに繋げる
 // 新しく最後尾になった新しいトークンを返す。
-Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
+static Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
@@ -147,7 +171,7 @@ Token *tokenize(char *p) {
     return head.next;
 }
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+static Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     node->lhs = lhs;
@@ -155,7 +179,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     return node;
 }
 
-Node *new_node_num(int val) {
+static Node *new_node_num(int val) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
     node->val = val;
@@ -163,7 +187,7 @@ Node *new_node_num(int val) {
 }
 
 // 識別子として許す文字種を定義する
-bool is_alnum(char c) {
+static bool is_alnum(char c) {
     return  ('a' <= c && c <= 'z') ||
             ('A' <= c && c <= 'Z') ||
             ('0' <= c && c <= '9') ||
@@ -171,7 +195,7 @@ bool is_alnum(char c) {
 }
 
 // 変数を名前で検索する。無ければNULLを返す。
-LVar *find_lvar(Token *tok) {
+static LVar *find_lvar(Token *tok) {
     for (LVar *var = locals; var != NULL; var = var->next) {
         if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0) {
             return var;
@@ -191,7 +215,7 @@ void program(void) {
 }
 
 // stmt = expr ";" | "return" expr ";"
-Node  *stmt(void) {
+static Node  *stmt(void) {
     Node *node;
 
     if (consume("return")) {
@@ -206,12 +230,12 @@ Node  *stmt(void) {
 }
 
 // expr = assign
-Node *expr(void) {
+static Node *expr(void) {
     return assign();
 }
 
 // assign = equality ("=" assign)?
-Node *assign(void) {
+static Node *assign(void) {
     Node *node = equality();
     if (consume("=")) {
         node = new_node(ND_ASSIGN, node, assign());
@@ -220,7 +244,7 @@ Node *assign(void) {
 }
 
 // equality = relational ("==" relational | "!=" relational)*
-Node *equality(void) {
+static Node *equality(void) {
     Node *node = relational();
     for(;;) {
         if (consume("==")) {
@@ -234,7 +258,7 @@ Node *equality(void) {
 }
 
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
-Node *relational(void) {
+static Node *relational(void) {
     Node *node = add();
     for (;;) {
         if (consume("<")) {
@@ -252,7 +276,7 @@ Node *relational(void) {
 }
 
 // add = mul ("+" mul | "-" mul)*
-Node *add(void) {
+static Node *add(void) {
     Node *node = mul();
     for (;;) {
         if (consume("+")) {
@@ -266,7 +290,7 @@ Node *add(void) {
 }
 
 // mul = unary ("*" unary | "/" unary)*
-Node *mul(void) {
+static Node *mul(void) {
     Node *node = unary();
     for (;;) {
         if (consume("*")) {
@@ -280,7 +304,7 @@ Node *mul(void) {
 }
 
 // unary = ("+" | "-")? primary
-Node *unary(void) {
+static Node *unary(void) {
     if (consume("+")) {
         return unary();
     }
@@ -291,7 +315,7 @@ Node *unary(void) {
 }
 
 // primary = num | ident | "(" expr ")"
-Node *primary(void) {
+static Node *primary(void) {
     // 括弧で囲まれている場合
     if (consume("(")) {
         Node *node = expr();
