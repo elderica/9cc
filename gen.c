@@ -105,13 +105,14 @@ void gen(Node *node) {
 }
 
 // コード生成器のエントリポイント
-void gencode(Node *node) {
+void gencode(Function *func) {
     // 変数にオフセットを割り当てる
     int o = 0;
-    for (LVar *var = locals; var != NULL; var = var->next) {
-        var->offset = o;
+    for (LVar *var = func->locals; var != NULL; var = var->next) {
         o += 8;
+        var->offset = o;
     }
+    func->stack_size = o;
 
     // プロローグを出力する
     // 変数のための領域を確保する
@@ -120,10 +121,10 @@ void gencode(Node *node) {
     printf("main:\n");
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", o);
+    printf("  sub rsp, %d\n", func->stack_size);
 
     int l = 1;
-    for (Node *cur = node; cur != NULL; cur = cur->next) {
+    for (Node *cur = func->nodes; cur != NULL; cur = cur->next) {
         printf("  # %s:%d line:%d\n", __FILE__, __LINE__, l++);
         gen(cur);
     }

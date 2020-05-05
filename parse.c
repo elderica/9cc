@@ -28,6 +28,8 @@ static LVar *new_lvar(Token *tok);
 
 static bool is_alnum(char c);
 
+static Function *new_function(Node *nodes, LVar *locals);
+
 static Node *stmt(void);
 static Node *expr(void);
 static Node *assign(void);
@@ -221,8 +223,18 @@ static LVar *new_lvar(Token *tok) {
     return var;
 }
 
+Function *new_function(Node *nodes, LVar *locals) {
+    Function *func = calloc(1, sizeof(Function));
+    func->nodes = nodes;
+    func->locals = locals;
+
+    return func;
+}
 // program = stmt*
-Node* program(void) {
+Function* program(void) {
+    // 変数の新たな有効範囲を導入する。
+    locals = NULL;
+
     Node dummy;
     Node *cur = &dummy;
 
@@ -232,7 +244,7 @@ Node* program(void) {
     }
     cur->next = NULL;
 
-    return dummy.next;
+    return new_function(dummy.next, locals);
 }
 
 // stmt = expr ";" | "return" expr ";"

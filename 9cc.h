@@ -66,12 +66,17 @@ struct Node {
     LVar *var;     // kindがND_LVARのときに使う
 };
 
+typedef struct Function Function;
+struct Function {
+    Node *nodes;
+    LVar *locals;
+    int stack_size;
+};
+
 // 現在着目しているトークン
 extern Token *token;
 // 入力プログラム
 extern char *user_input;
-// ローカル変数
-extern LVar *locals;
 
 // utils.c
 extern void error(char *fmt, ...);
@@ -79,7 +84,7 @@ extern bool startswith(char *prefix, char *str);
 
 // parse.c
 extern Token *tokenize(char *p);
-extern Node* program(void);
+extern Function* program(void);
 
 // gen.c
-extern void gencode(Node* node);
+extern void gencode(Function* func);
