@@ -17,6 +17,7 @@ static void gen_lval(Node *node) {
 }
 
 void gen(Node *node) {
+    int ln;
     switch (node->kind) {
         case ND_NUM:
             printf("  # ND_NUM\n");
@@ -45,25 +46,26 @@ void gen(Node *node) {
             printf("  add rsp, 8\n");
             return;
         case ND_IF:
+            ln = labelnumber;
             if (node->els == NULL) {
                 printf("  # ND_IF(els==NULL)\n");
                 gen(node->cond);
                 printf("  pop rax\n");
                 printf("  cmp rax, 0\n");
-                printf("  je .L.endif.%d\n", labelnumber);
+                printf("  je .L.endif.%d\n", ln);
                 gen(node->then);
-                printf(".L.endif.%d:\n", labelnumber);
+                printf(".L.endif.%d:\n", ln);
             } else {
                 printf("  # ND_IF(els!=NULL)\n");
                 gen(node->cond);
                 printf("  pop rax\n");
                 printf("  cmp rax, 0\n");
-                printf("  je .L.else.%d\n", labelnumber);
+                printf("  je .L.else.%d\n", ln);
                 gen(node->then);
-                printf("  jmp .L.endif.%d\n", labelnumber);
-                printf(".L.else.%d:\n", labelnumber);
+                printf("  jmp .L.endif.%d\n", ln);
+                printf(".L.else.%d:\n", ln);
                 gen(node->els);
-                printf(".L.endif.%d:\n", labelnumber);
+                printf(".L.endif.%d:\n", ln);
             }
             labelnumber++;
             return;
