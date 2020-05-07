@@ -12,6 +12,7 @@ LVar *locals = NULL;
 
 static void error_at(char *loc, char *fmt, ...);
 static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
+static char *starts_with_reserved(char *p);
 
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
@@ -116,6 +117,34 @@ static Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     return tok;
 }
 
+static char *starts_with_reserved(char *p) {
+    static char *keywords[] = {
+        "return",
+        "if",
+        "else",
+    };
+    for (int i = 0; i < (sizeof(keywords) / sizeof(keywords[0])); i++) {
+        int l = strlen(keywords[i]);
+        if (startswith(keywords[i], p) && !is_alnum(p[l])) {
+            return keywords[i];
+        }
+    }
+
+    static char *multi_chars_operators[] = {
+        "==",
+        "!=",
+        "<=",
+        ">=",
+    };
+    for (int i = 0; i < (sizeof(multi_chars_operators) / sizeof(multi_chars_operators[0])); i++) {
+        if (startswith(multi_chars_operators[i], p)) {
+            return multi_chars_operators[i];
+        }
+    }
+
+    return NULL;
+}
+
 // 字句解析を行なう。
 Token *tokenize(char *p) {
     Token head;
@@ -129,29 +158,11 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (startswith("return", p) && !is_alnum(p[6])) {
-            cur = new_token(TK_RESERVED, cur, p, 6);
-            p += 6;
-            continue;
-        }
-
-        if (startswith("if", p) && !is_alnum(p[2])) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
-            continue;
-        }
-        if (startswith("else", p) && !is_alnum(p[4])) {
-            cur = new_token(TK_RESERVED, cur, p, 4);
-            p += 4;
-            continue;
-        }
-
-        if (startswith("==", p) ||
-            startswith("!=", p) ||
-            startswith(">=", p) ||
-            startswith("<=", p) ) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
+        char *symbol = starts_with_reserved(p);
+        if (symbol != NULL) {
+            int l = strlen(symbol);
+            cur = new_token(TK_RESERVED, cur, p, l);
+            p += l;
             continue;
         }
 
