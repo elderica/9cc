@@ -18,6 +18,7 @@ static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
 static Node *new_node_lvar(LVar *var);
 static Node *new_node_if(Node *cond, Node *then, Node *els);
+static Node *new_node_while(Node *cond, Node *body);
 
 static bool consume(char *symbol);
 static Token *consume_ident(void);
@@ -122,6 +123,7 @@ static char *starts_with_reserved(char *p) {
         "return",
         "if",
         "else",
+        "while",
     };
     for (int i = 0; i < (sizeof(keywords) / sizeof(keywords[0])); i++) {
         int l = strlen(keywords[i]);
@@ -232,6 +234,16 @@ static Node *new_node_if(Node *cond, Node *then, Node *els) {
     return node;
 }
 
+static Node *new_node_while(Node *cond, Node *body) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+
+    node->cond = cond;
+    node->body = body;
+
+    return node;
+}
+
 // 識別子として許す文字種を定義する
 static bool is_alnum(char c) {
     return  isalnum(c) || (c == '_');
@@ -283,6 +295,7 @@ Function* program(void) {
 
 // stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
 //      | expr ";"
 static Node  *stmt(void) {
     Node *node;
@@ -303,6 +316,15 @@ static Node  *stmt(void) {
             els = stmt();
         }
         node = new_node_if(cond, then, els);
+        return node;
+    }
+
+    if (consume("while")) {
+        expect("(");
+        Node *cond = expr();
+        expect(")");
+        Node *body = stmt();
+        node = new_node_while(cond, body);
         return node;
     }
 

@@ -42,6 +42,7 @@ enum NodeKind {
     ND_RETURN,  // return
     ND_EXPR_STMT,  // 式文
     ND_IF,         // if文
+    ND_WHILE,      // while文
 };
 
 // ローカル変数を表す型
@@ -67,9 +68,12 @@ struct Node {
     LVar *var;     // kindがND_LVARのときに使う
 
     // kindがND_IFのときに使う
-    Node *cond;
+    Node *cond;  // ND_WHILEにも使う
     Node *then;
     Node *els;
+
+    // kindがND_WHILEのときに使う
+    Node *body;
 };
 
 typedef struct Function Function;

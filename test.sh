@@ -70,6 +70,8 @@ try 2 'if (2-1) return 2; return 3;'
 try 27 'if (0) return 18; else return 27; return 26;'
 try 18 'if (1) return 18; else return 27; return 26;'
 try 3 'if (0) return 1; if (2) return 3; else return 4;'
+try 10 'i=0; while (i < 10) i=i+1; return i;'
+try 13 'i=0; while (i <= 10) if (i / 5 == 1) return 13; else i = i+1;'
 
 echo OK
 
