@@ -63,6 +63,13 @@ try 42 'p=3;q=p;return 42;return p==q;return p!=q;'
 try 27 'a1=27;a2=20;return a1;'
 try 27 'a_a=27;a_b=20;return a_a;'
 try 4 'A=4;b=2;c3=5;return A;'
+try 3 'if (0) return 2; return 3;'
+try 3 'if (1-1) return 2; return 3;'
+try 2 'if (1) return 2; return 3;'
+try 2 'if (2-1) return 2; return 3;'
+try 27 'if (0) return 18; else return 27; return 26;'
+try 18 'if (1) return 18; else return 27; return 26;'
+try 3 'if (0) return 1; if (2) return 3; else return 4;'
 
 echo OK
 

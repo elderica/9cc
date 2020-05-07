@@ -16,6 +16,7 @@ static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
 static Node *new_node_lvar(LVar *var);
+static Node *new_node_if(Node *cond, Node *then, Node *els);
 
 static bool consume(char *symbol);
 static Token *consume_ident(void);
@@ -134,6 +135,17 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (startswith("if", p) && !is_alnum(p[2])) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+            continue;
+        }
+        if (startswith("else", p) && !is_alnum(p[4])) {
+            cur = new_token(TK_RESERVED, cur, p, 4);
+            p += 4;
+            continue;
+        }
+
         if (startswith("==", p) ||
             startswith("!=", p) ||
             startswith(">=", p) ||
@@ -198,6 +210,17 @@ static Node *new_node_lvar(LVar *var) {
     return node;
 }
 
+static Node *new_node_if(Node *cond, Node *then, Node *els) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+
+    node->cond = cond;
+    node->then = then;
+    node->els = els;
+
+    return node;
+}
+
 // 識別子として許す文字種を定義する
 static bool is_alnum(char c) {
     return  isalnum(c) || (c == '_');
@@ -247,15 +270,32 @@ Function* program(void) {
     return new_function(dummy.next, locals);
 }
 
-// stmt = expr ";" | "return" expr ";"
+// stmt = "return" expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | expr ";"
 static Node  *stmt(void) {
     Node *node;
 
     if (consume("return")) {
         node = new_node_binary(ND_RETURN, expr(), NULL);
-    } else {
-        node = new_node_binary(ND_EXPR_STMT, expr(), NULL);
+        expect(";");
+        return node;
     }
+
+    if (consume("if")) {
+        expect("(");
+        Node *cond = expr();
+        expect(")");
+        Node *then = stmt();
+        Node *els = NULL;
+        if (consume("else")) {
+            els = stmt();
+        }
+        node = new_node_if(cond, then, els);
+        return node;
+    }
+
+    node = new_node_binary(ND_EXPR_STMT, expr(), NULL);
     expect(";");
     return node;
 }

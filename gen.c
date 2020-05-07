@@ -4,6 +4,8 @@
 static void gen_lval(Node *node);
 static void gen(Node *node);
 
+static unsigned int labelnumber = 0;
+
 static void gen_lval(Node *node) {
     if (node->kind != ND_LVAR) {
         error("代入の左辺値が変数ではありません");
@@ -41,6 +43,29 @@ void gen(Node *node) {
             printf("  # ND_EXPR_STMT\n");
             gen(node->lhs);
             printf("  add rsp, 8\n");
+            return;
+        case ND_IF:
+            if (node->els == NULL) {
+                printf("  # ND_IF(els==NULL)\n");
+                gen(node->cond);
+                printf("  pop rax\n");
+                printf("  cmp rax, 0\n");
+                printf("  je .L.endif.%d\n", labelnumber);
+                gen(node->then);
+                printf(".L.endif.%d:\n", labelnumber);
+            } else {
+                printf("  # ND_IF(els!=NULL)\n");
+                gen(node->cond);
+                printf("  pop rax\n");
+                printf("  cmp rax, 0\n");
+                printf("  je .L.else.%d\n", labelnumber);
+                gen(node->then);
+                printf("  jmp .L.endif.%d\n", labelnumber);
+                printf(".L.else.%d:\n", labelnumber);
+                gen(node->els);
+                printf(".L.endif.%d:\n", labelnumber);
+            }
+            labelnumber++;
             return;
         case ND_RETURN:
             gen(node->lhs);
