@@ -124,6 +124,7 @@ static char *starts_with_reserved(char *p) {
         "if",
         "else",
         "while",
+        "for",
     };
     for (int i = 0; i < (sizeof(keywords) / sizeof(keywords[0])); i++) {
         int l = strlen(keywords[i]);
@@ -244,6 +245,18 @@ static Node *new_node_while(Node *cond, Node *body) {
     return node;
 }
 
+static Node *new_node_for(Node *init, Node *cond, Node *inc, Node *body) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+
+    node->init = init;
+    node->cond = cond;
+    node->inc  = inc;
+    node->body = body;
+
+    return node;
+}
+
 // 識別子として許す文字種を定義する
 static bool is_alnum(char c) {
     return  isalnum(c) || (c == '_');
@@ -296,6 +309,7 @@ Function* program(void) {
 // stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | expr ";"
 static Node  *stmt(void) {
     Node *node;
@@ -326,6 +340,27 @@ static Node  *stmt(void) {
         Node *body = stmt();
         node = new_node_while(cond, body);
         return node;
+    }
+
+    if (consume("for")) {
+        expect("(");
+        Node *init = NULL;
+        if (!consume(";")) {
+            init = new_node_binary(ND_EXPR_STMT, expr(), NULL);
+            expect(";");
+        }
+        Node *cond = NULL;
+        if (!consume(";")) {
+            cond = expr();
+            expect(";");
+        }
+        Node *inc = NULL;
+        if (!consume(")")) {
+            inc = new_node_binary(ND_EXPR_STMT, expr(), NULL);
+            expect(")");
+        }
+        Node *body = stmt();
+        return new_node_for(init, cond, inc, body);
     }
 
     node = new_node_binary(ND_EXPR_STMT, expr(), NULL);

@@ -43,6 +43,7 @@ enum NodeKind {
     ND_EXPR_STMT,  // 式文
     ND_IF,         // if文
     ND_WHILE,      // while文
+    ND_FOR,        // for文
 };
 
 // ローカル変数を表す型
@@ -68,12 +69,16 @@ struct Node {
     LVar *var;     // kindがND_LVARのときに使う
 
     // kindがND_IFのときに使う
-    Node *cond;  // ND_WHILEにも使う
+    Node *cond;  // ND_WHILE及びND_FORにも使う
     Node *then;
     Node *els;
 
     // kindがND_WHILEのときに使う
     Node *body;
+
+    // kindがND_FORのときに使う
+    Node *init;
+    Node *inc;
 };
 
 typedef struct Function Function;
