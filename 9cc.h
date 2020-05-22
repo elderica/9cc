@@ -44,6 +44,7 @@ enum NodeKind {
     ND_IF,         // if文
     ND_WHILE,      // while文
     ND_FOR,        // for文
+    ND_BLOCK,      // ブロック
 };
 
 // ローカル変数を表す型
@@ -79,6 +80,10 @@ struct Node {
     // kindがND_FORのときに使う
     Node *init;
     Node *inc;
+
+    // kindがND_BLOCKのときに使う
+    // 一方向連結リストであり、終端はNULLである
+    Node *block;
 };
 
 typedef struct Function Function;

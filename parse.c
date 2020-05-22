@@ -14,6 +14,7 @@ static void error_at(char *loc, char *fmt, ...);
 static Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 static char *starts_with_reserved(char *p);
 
+static Node *new_node(NodeKind kind);
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_num(int val);
 static Node *new_node_lvar(LVar *var);
@@ -170,7 +171,7 @@ Token *tokenize(char *p) {
         }
 
         // カンマと代入演算子は1文字演算子と同様に予約語として扱う
-        if (strchr("+-*/()<>;=", *p) != NULL) {
+        if (strchr("+-*/()<>;={}", *p) != NULL) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -199,6 +200,12 @@ Token *tokenize(char *p) {
 
     new_token(TK_EOF, cur, p, 0);
     return head.next;
+}
+
+static Node *new_node(NodeKind kind) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
 }
 
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs) {
@@ -310,6 +317,7 @@ Function* program(void) {
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "{" stmt* "}"
 //      | expr ";"
 static Node  *stmt(void) {
     Node *node;
@@ -361,6 +369,22 @@ static Node  *stmt(void) {
         }
         Node *body = stmt();
         return new_node_for(init, cond, inc, body);
+    }
+
+    if (consume("{")) {
+        Node head = {};
+        Node *cur = &head;
+
+        while (!consume("}")) {
+            cur->next = stmt();
+            cur = cur->next;
+        }
+        cur->next = NULL;
+
+        Node *node = new_node(ND_BLOCK);
+        node->block = head.next;
+
+        return node;
     }
 
     node = new_node_binary(ND_EXPR_STMT, expr(), NULL);

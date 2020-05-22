@@ -75,6 +75,8 @@ try 13 'i=0; while (i <= 10) if (i / 5 == 1) return 13; else i = i+1;'
 try 55 'i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j;'
 try 3 'for (;;) return 3; return 5;'
 try 5 'i=1; m=0; for (; i<=15; i=i+1) if ((i-(i/3)*3)==0) m=m+1; return m;'
+try 3 '{1; {2;} return 3;}'
+try 55 'i=0; j=0; while (i<=10) { j=i+j; i=i+1; } return j;'
 
 echo OK
 

@@ -98,6 +98,11 @@ void gen(Node *node) {
             printf("  jmp .L.for.%d\n", ln);
             printf(".L.endfor.%d:\n", ln);
             return;
+        case ND_BLOCK:
+            for (Node *n = node->block; n != NULL; n = n->next) {
+                gen(n);
+            }
+            return;
         case ND_RETURN:
             gen(node->lhs);
             printf("  # ND_RETURN\n");
