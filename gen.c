@@ -46,7 +46,7 @@ void gen(Node *node) {
             printf("  add rsp, 8\n");
             return;
         case ND_IF:
-            ln = labelnumber;
+            ln = labelnumber++;
             if (node->els == NULL) {
                 printf("  # ND_IF(els==NULL)\n");
                 gen(node->cond);
@@ -67,10 +67,9 @@ void gen(Node *node) {
                 gen(node->els);
                 printf(".L.endif.%d:\n", ln);
             }
-            labelnumber++;
             return;
         case ND_WHILE:
-            ln = labelnumber;
+            ln = labelnumber++;
             printf(".L.while.%d:\n", ln);
             gen(node->cond);
             printf("  pop rax\n");
@@ -79,10 +78,9 @@ void gen(Node *node) {
             gen(node->body);
             printf("  jmp .L.while.%d\n", ln);
             printf(".L.endwhile.%d:\n", ln);
-            labelnumber++;
             return;
         case ND_FOR:
-            ln = labelnumber;
+            ln = labelnumber++;
             if (node->init != NULL) {
                 gen(node->init);
             }
@@ -99,7 +97,6 @@ void gen(Node *node) {
             }
             printf("  jmp .L.for.%d\n", ln);
             printf(".L.endfor.%d:\n", ln);
-            labelnumber++;
             return;
         case ND_RETURN:
             gen(node->lhs);
