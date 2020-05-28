@@ -6,6 +6,8 @@ static void gen(Node *node);
 
 static unsigned int labelnumber = 0;
 
+static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 static void gen_lval(Node *node) {
     if (node->kind != ND_LVAR) {
         error("代入の左辺値が変数ではありません");
@@ -103,10 +105,20 @@ void gen(Node *node) {
                 gen(n);
             }
             return;
-        case ND_FUNCALL:
+        case ND_FUNCALL: { // 変数宣言は文ではないためラベルがつけられない
+            int nargs = 0;
+            for (Node *arg = node->args; arg != NULL; arg = arg->next) {
+                gen(arg);
+                nargs++;
+            }
+            // 引数は右からスタックに積まれているから、正しい順にpopする必要がある
+            for (int i = nargs - 1; i >= 0; i--) {
+                printf("  pop %s\n", argregs[i]);
+            }
             printf("  call %s\n", node->funcname);
             printf("  push rax\n");
             return;
+        }
         case ND_RETURN:
             gen(node->lhs);
             printf("  # ND_RETURN\n");

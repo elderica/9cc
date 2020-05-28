@@ -89,6 +89,7 @@ struct Node {
 
     // kindがND_FUNCALLのときに使う
     char *funcname;
+    Node *args;
 };
 
 typedef struct Function Function;

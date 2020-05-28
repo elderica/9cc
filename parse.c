@@ -43,7 +43,7 @@ static Node *add(void);
 static Node *mul(void);
 static Node *unary(void);
 static Node *primary(void);
-
+static Node *func_args(void);
 
 // プログラム中のどこにエラーがあるか報告する
 static void error_at(char *loc, char *fmt, ...) {
@@ -170,8 +170,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        // カンマと代入演算子は1文字演算子と同様に予約語として扱う
-        if (strchr("+-*/()<>;={}", *p) != NULL) {
+        if (ispunct(*p) != 0) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -477,8 +476,7 @@ static Node *unary(void) {
     return primary();
 }
 
-// primary = num | ident args? | "(" expr ")"
-// args = "(" ")"
+// primary = num | ident func-args? | "(" expr ")"
 static Node *primary(void) {
     // 括弧で囲まれている場合
     if (consume("(")) {
@@ -491,9 +489,9 @@ static Node *primary(void) {
     if (tok != NULL) {
         // 関数呼び出しの場合
         if (consume("(")) {
-            expect(")");
             Node *node = new_node(ND_FUNCALL);
             node->funcname = strndup(tok->str,tok->len);
+            node->args = func_args();
             return node;
         }
 
@@ -509,3 +507,21 @@ static Node *primary(void) {
     return new_node_num(expect_number());
 }
 
+// func-args = "(" (assign ("," assign)*)? ")"
+static Node *func_args(void) {
+    // "("の存在はprimaryで検査している
+    if (consume(")")) {
+        return NULL;
+    }
+
+    Node *head = assign();
+    Node *cur = head;
+    while (consume(",")) {
+        cur->next = assign();
+        cur = cur->next;
+    }
+    cur->next = NULL;
+    expect(")");
+
+    return head;
+}
