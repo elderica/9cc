@@ -477,7 +477,8 @@ static Node *unary(void) {
     return primary();
 }
 
-// primary = num | ident | "(" expr ")"
+// primary = num | ident args? | "(" expr ")"
+// args = "(" ")"
 static Node *primary(void) {
     // 括弧で囲まれている場合
     if (consume("(")) {
@@ -488,6 +489,14 @@ static Node *primary(void) {
 
     Token *tok = consume_ident();
     if (tok != NULL) {
+        // 関数呼び出しの場合
+        if (consume("(")) {
+            expect(")");
+            Node *node = new_node(ND_FUNCALL);
+            node->funcname = strndup(tok->str,tok->len);
+            return node;
+        }
+
         // 既出の変数ならばそれを参照させ、そうでなければ新規の変数として扱う
         LVar *lvar = find_lvar(tok);
         if (lvar == NULL) {

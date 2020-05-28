@@ -1,11 +1,16 @@
 #!/bin/sh
 
+cat <<EOF | gcc -xc -c -o tmp2.o -
+int ret3() { return 3; }
+int ret5() { return 5; }
+EOF
+
 try() {
     expected="$1"
     input="$2"
 
     ./9cc "$input" > tmp.s
-    gcc -g -o tmp tmp.s
+    gcc -g -o tmp tmp.s tmp2.o
     ./tmp
     actual="$?"
 
@@ -77,6 +82,8 @@ try 3 'for (;;) return 3; return 5;'
 try 5 'i=1; m=0; for (; i<=15; i=i+1) if ((i-(i/3)*3)==0) m=m+1; return m;'
 try 3 '{1; {2;} return 3;}'
 try 55 'i=0; j=0; while (i<=10) { j=i+j; i=i+1; } return j;'
+try 3 'return ret3();'
+try 5 'return ret5();'
 
 echo OK
 

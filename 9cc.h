@@ -1,4 +1,5 @@
 /* vim:set shiftwidth=4 softtabstop=4 expandtab: */
+#define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -45,6 +46,7 @@ enum NodeKind {
     ND_WHILE,      // while文
     ND_FOR,        // for文
     ND_BLOCK,      // ブロック
+    ND_FUNCALL,    //関数呼び出し
 };
 
 // ローカル変数を表す型
@@ -84,6 +86,9 @@ struct Node {
     // kindがND_BLOCKのときに使う
     // 一方向連結リストであり、終端はNULLである
     Node *block;
+
+    // kindがND_FUNCALLのときに使う
+    char *funcname;
 };
 
 typedef struct Function Function;
