@@ -115,7 +115,22 @@ void gen(Node *node) {
             for (int i = nargs - 1; i >= 0; i--) {
                 printf("  pop %s\n", argregs[i]);
             }
+
+            // 関数を呼ぶ際にはRSPを16バイト境界にアラインしなければならない
+            int ln = labelnumber++;
+            printf("  mov rax, rsp\n");
+            printf("  and rax, 15\n"); // 16の倍数ならば下位4ビットは必ず0である
+            printf("  jnz .L.call.%d\n", ln);
+            // 可変長引数を取る関数を呼ぶときは、XMMレジスタに入れて渡す浮動小数点数の個数をalに入れなくてはならない
+            printf("  mov rax, 0\n");
             printf("  call %s\n", node->funcname);
+            printf("  jmp .L.endcall.%d\n", ln);
+            printf(".L.call.%d:\n", ln);
+            printf("  sub rsp, 8\n"); // スタックは下位アドレス方向に伸びるから
+            printf("  mov rax, 0\n");
+            printf("  call %s\n", node->funcname);
+            printf("  add rsp, 8\n");
+            printf(".L.endcall.%d:\n", ln);
             printf("  push rax\n");
             return;
         }
