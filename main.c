@@ -10,8 +10,8 @@ int main(int argc, char **argv) {
     setlocale(LC_CTYPE, "C");  // isalnum(3)に正しく判定させる
     user_input = argv[1];
     token = tokenize(user_input);
-    Function *func = program();
-    gencode(func);
+    Function *prog = program();
+    gencode(prog);
 
    return 0;
 }

@@ -25,6 +25,7 @@ static bool consume(char *symbol);
 static Token *consume_ident(void);
 static void expect(char *symbol);
 static int expect_number(void);
+static char *expect_ident(void);
 static bool at_eof(void);
 
 static LVar *find_lvar(Token *tok);
@@ -32,8 +33,9 @@ static LVar *new_lvar(Token *tok);
 
 static bool is_alnum(char c);
 
-static Function *new_function(Node *nodes, LVar *locals);
+static Function *new_function(char *name, Node *nodes, LVar *locals);
 
+static Function *function(void);
 static Node *stmt(void);
 static Node *expr(void);
 static Node *assign(void);
@@ -102,6 +104,17 @@ static int expect_number() {
     int val = token->val;
     token = token->next;
     return val;
+}
+
+// 次のトークンが識別子ならば、トークンを1つ読み進めてその数値を返す。
+// それ以外の場合にはエラーを報告する。
+static char *expect_ident(void) {
+    if (token->kind != TK_IDENT) {
+        error_at(token->str, "識別子ではありません");
+    }
+    char *s = strndup(token->str, token->len);
+    token = token->next;
+    return s;
 }
 
 static bool at_eof(void) {
@@ -288,28 +301,49 @@ static LVar *new_lvar(Token *tok) {
     return var;
 }
 
-Function *new_function(Node *nodes, LVar *locals) {
+static Function *new_function(char *name, Node *nodes, LVar *locals) {
     Function *func = calloc(1, sizeof(Function));
+    func->name = name;
     func->nodes = nodes;
     func->locals = locals;
 
     return func;
 }
-// program = stmt*
-Function* program(void) {
+
+// program = function*
+Function *program(void) {
+    Function head = {};
+    Function *cur = &head;
+
+    while (!at_eof()) {
+        cur->next = function();
+        cur = cur->next;
+    }
+    cur->next = NULL;
+
+    return head.next;
+}
+
+// function = ident "(" ")" "{" stmt* "}"
+static Function *function(void) {
     // 変数の新たな有効範囲を導入する。
     locals = NULL;
+
+    char *name = expect_ident();
+    expect("(");
+    expect(")");
+    expect("{");
 
     Node dummy;
     Node *cur = &dummy;
 
-    while (!at_eof()){
+    while (!consume("}")){
         cur->next = stmt();
         cur = cur->next;
     }
     cur->next = NULL;
 
-    return new_function(dummy.next, locals);
+    return new_function(name, dummy.next, locals);
 }
 
 // stmt = "return" expr ";"

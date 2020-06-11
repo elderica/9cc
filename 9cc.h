@@ -94,9 +94,11 @@ struct Node {
 
 typedef struct Function Function;
 struct Function {
+    char *name;
     Node *nodes;
     LVar *locals;
     int stack_size;
+    Function *next;
 };
 
 // 現在着目しているトークン
@@ -113,4 +115,4 @@ extern Token *tokenize(char *p);
 extern Function* program(void);
 
 // gen.c
-extern void gencode(Function* func);
+extern void gencode(Function *prog);

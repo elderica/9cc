@@ -8,6 +8,8 @@ static unsigned int labelnumber = 0;
 
 static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
+static char *funcname;
+
 static void gen_lval(Node *node) {
     if (node->kind != ND_LVAR) {
         error("代入の左辺値が変数ではありません");
@@ -138,7 +140,7 @@ void gen(Node *node) {
             gen(node->lhs);
             printf("  # ND_RETURN\n");
             printf("  pop rax\n");
-            printf("  jmp .L.return\n");
+            printf("  jmp .L.return.%s\n", funcname);
             return;
     }
 
@@ -197,33 +199,38 @@ void gen(Node *node) {
 }
 
 // コード生成器のエントリポイント
-void gencode(Function *func) {
+void gencode(Function *prog) {
     // 変数にオフセットを割り当てる
-    int o = 0;
-    for (LVar *var = func->locals; var != NULL; var = var->next) {
-        o += 8;
-        var->offset = o;
+    for (Function *fn = prog; fn != NULL; fn = fn->next) {
+        int o = 0;
+        for (LVar *var = fn->locals; var != NULL; var = var->next) {
+            o += 8;
+            var->offset = o;
+        }
+        fn->stack_size = o;
     }
-    func->stack_size = o;
 
-    // プロローグを出力する
-    // 変数のための領域を確保する
     printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    printf("main:\n");
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", func->stack_size);
+    for (Function *fn = prog; fn != NULL; fn = fn->next) {
+        printf(".global %s\n", fn->name);
+        printf("%s:\n", fn->name);
+        funcname = fn->name;
 
-    int l = 1;
-    for (Node *cur = func->nodes; cur != NULL; cur = cur->next) {
-        printf("  # %s:%d line:%d\n", __FILE__, __LINE__, l++);
-        gen(cur);
+        // プロローグを出力する
+        printf("  push rbp\n");
+        printf("  mov rbp, rsp\n");
+        printf("  sub rsp, %d\n", fn->stack_size);
+
+        int l = 1;
+        for (Node *cur = fn->nodes; cur != NULL; cur = cur->next) {
+            printf("  # %s:%d function:%s, line:%d\n", __FILE__, __LINE__, fn->name, l++);
+            gen(cur);
+        }
+
+        // エピローグ
+        printf(".L.return.%s:\n", funcname);
+        printf("  mov rsp, rbp\n");
+        printf("  pop rbp\n");
+        printf("  ret\n");
     }
-
-    // エピローグ
-    printf(".L.return:\n");
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret\n");
 }
